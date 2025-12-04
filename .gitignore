@@ -14,3 +14,4 @@ __pycache__/
 data/
 request_seed.py
 decrypt_seed.py
+commit_proof.py
