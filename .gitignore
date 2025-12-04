@@ -12,3 +12,5 @@ __pycache__/
 .vscode/
 .idea/
 data/
+request_seed.py
+decrypt_seed.py
