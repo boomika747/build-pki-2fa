@@ -1,7 +1,6 @@
 # Stage 1: Builder - install Python deps
 FROM python:3.11-slim AS builder
 WORKDIR /app
-
 # copy requirements first to take advantage of layer caching
 COPY requirements.txt .
 RUN pip install --user -r requirements.txt
@@ -25,6 +24,13 @@ COPY . /app
 
 # Make sure Python sees /app modules
 ENV PYTHONPATH=/app
+
+# Create cron directory
+RUN mkdir -p /app/cron
+
+# Copy cron files BEFORE chmod
+COPY cron/log_2fa_cron.py /app/cron/log_2fa_cron.py
+COPY cron/2fa-cron /app/cron/2fa-cron
 
 # Ensure cron script is executable and install crontab
 RUN chmod 755 /app/cron/log_2fa_cron.py && \
