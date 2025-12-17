@@ -29,16 +29,16 @@ def decrypt_seed():
 
 @app.get("/generate-2fa")
 def generate_2fa():
-    if not os.path.exists(SEED_FILE):
-        raise HTTPException(400, "Seed not found")
-
-    with open(SEED_FILE) as f:
+    with open(SEED_FILE, "r") as f:
         seed = f.read().strip()
 
-    return {
-        "code": generate_totp_code(seed),
-        "valid_for": 30
-    }
+    code = generate_totp_code(seed)
+
+    # 🔴 THIS LINE WAS MISSING / WRONG
+    with open("/data/last_code.txt", "w") as f:
+        f.write(code)
+
+    return {"code": code, "valid_for": 30}
 
 class CodeRequest(BaseModel):
     code: str

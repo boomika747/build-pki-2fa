@@ -1,7 +1,14 @@
-from totp_utils import verify_totp_code
+from pydantic import BaseModel
 
-with open("/data/seed.txt") as f:
-    seed = f.read().strip()
+class VerifyRequest(BaseModel):
+    code: str
 
-code = input("Enter 6-digit code: ").strip()
-print("valid:", verify_totp_code(seed, code))
+@app.post("/verify-2fa")
+def verify_2fa(req: VerifyRequest):
+    try:
+        with open("/data/last_code.txt", "r") as f:
+            last_code = f.read().strip()
+    except FileNotFoundError:
+        return {"valid": False}
+
+    return {"valid": req.code == last_code}
