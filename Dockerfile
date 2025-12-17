@@ -2,6 +2,15 @@
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
+# Install build dependencies for cryptography and cffi
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+            build-essential \
+                    libssl-dev \
+                            libffi-dev \
+                                    python3-dev && \
+                                        rm -rf /var/lib/apt/lists/*
+
 # copy requirements first to take advantage of layer caching
 COPY requirements.txt .
 RUN pip install --user -r requirements.txt
