@@ -1,49 +1,29 @@
-# Stage 1: Builder - install Python deps
-FROM python:3.11-slim AS builder
+FROM python:3.10-slim
+
 WORKDIR /app
 
-# Install build dependencies for cryptography and cffi
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-            build-essential \
-                    libssl-dev \
-                            libffi-dev \
-                                    python3-dev && \
-                                        rm -rf /var/lib/apt/lists/*
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    cron \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
-# copy requirements first to take advantage of layer caching
+# Python dependencies
 COPY requirements.txt .
-RUN pip install --user -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Runtime
-FROM python:3.11-slim
-ENV TZ=UTC
-WORKDIR /app
-
-# Install system deps (cron, tzdata)
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y cron tzdata && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy installed python packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
-
-# Copy application code
+# Copy application
 COPY . /app
 
-# Make sure Python sees /app modules
 ENV PYTHONPATH=/app
+ENV TZ=UTC
 
-# Ensure cron script is executable and install crontab
-RUN chmod 755 /app/cron/log_2fa_cron.py && \
-    chmod 644 /app/cron/2fa-cron && \
-    crontab /app/cron/2fa-cron
-
-# Create persistent mount points
-RUN mkdir -p /data /cron && chmod 755 /data /cron
+# Cron setup
+RUN chmod +x /app/cron/log_2fa_cron.py && crontab /app/cron/2fa-cron
 
 EXPOSE 8080
 
-# Start cron and the FastAPI app (uvicorn)
-CMD service cron start && uvicorn app:app --host 0.0.0.0 --port 8080
+CMD cron && uvicorn app:app --host 0.0.0.0 --port 8080

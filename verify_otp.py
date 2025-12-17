@@ -1,12 +1,7 @@
 from totp_utils import verify_totp_code
 
-with open("data/seed.txt", "r") as f:
-    hex_seed = f.read().strip()
+with open("/data/seed.txt") as f:
+    seed = f.read().strip()
 
-code = input("Enter 6-digit code to verify: ").strip()
-if len(code) != 6 or not code.isdigit():
-    print("Invalid code format (must be 6 digits)")
-    exit(1)
-
-valid = verify_totp_code(hex_seed, code)
-print("valid:", valid)
+code = input("Enter 6-digit code: ").strip()
+print("valid:", verify_totp_code(seed, code))

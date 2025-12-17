@@ -1,15 +1,12 @@
-import base64
 import pyotp
-
-def hex_to_base32(hex_seed: str) -> str:
-    return base64.b32encode(bytes.fromhex(hex_seed)).decode()
+import base64
 
 def generate_totp_code(hex_seed: str) -> str:
-    base32_seed = hex_to_base32(hex_seed)
-    totp = pyotp.TOTP(base32_seed)
-    return totp.now()
+    seed_bytes = bytes.fromhex(hex_seed)
+    base32_seed = base64.b32encode(seed_bytes).decode()
+    return pyotp.TOTP(base32_seed).now()
 
 def verify_totp_code(hex_seed: str, code: str) -> bool:
-    base32_seed = hex_to_base32(hex_seed)
-    totp = pyotp.TOTP(base32_seed)
-    return totp.verify(code, valid_window=1)
+    seed_bytes = bytes.fromhex(hex_seed)
+    base32_seed = base64.b32encode(seed_bytes).decode()
+    return pyotp.TOTP(base32_seed).verify(code)

@@ -1,22 +1,14 @@
-import sys
-sys.path.append('/app')  # ensure Python can find totp_utils
-
 #!/usr/bin/env python3
 import datetime, os
-from totp_utils import generate_totp_code  # Correct function name
+from totp_utils import generate_totp_code
 
 SEED_FILE = "/data/seed.txt"
 OUT_FILE = "/cron/last_code.txt"
 
-try:
-    if not os.path.exists(SEED_FILE):
-        raise FileNotFoundError("seed not found")
-    with open(SEED_FILE, "r") as f:
-        hex_seed = f.read().strip()
-    code = generate_totp_code(hex_seed)
-    timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    with open(OUT_FILE, "a") as out:
-        out.write(f"{timestamp} - 2FA Code: {code}\n")
-except Exception as e:
-    import sys
-    sys.stderr.write(str(e) + "\n")
+if os.path.exists(SEED_FILE):
+    with open(SEED_FILE) as f:
+        seed = f.read().strip()
+    code = generate_totp_code(seed)
+    ts = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    with open(OUT_FILE, "a") as f:
+        f.write(f"{ts} - 2FA Code: {code}\n")

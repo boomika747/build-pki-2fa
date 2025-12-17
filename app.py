@@ -1,70 +1,54 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from totp_utils import generate_totp_code, verify_totp_code
 from decrypt_seed import decrypt_seed_route
-import os
-import secrets
+import os, secrets
 
 app = FastAPI()
 
-SEED_FILE = "/data/seed.txt"        # persistent seed storage
-ENCRYPTED_SEED = "/encrypted_seed.txt"
-
+SEED_FILE = "/data/seed.txt"
 
 @app.get("/")
 def home():
     return {"status": "ok"}
 
-
-# 1. Request seed (create seed if missing)
 @app.get("/request-seed")
 def request_seed():
-    # If seed does NOT exist -> create one
     if not os.path.exists(SEED_FILE):
-        seed = secrets.token_hex(32)  # 64-char hex
+        seed = secrets.token_hex(32)
+        os.makedirs("/data", exist_ok=True)
         with open(SEED_FILE, "w") as f:
             f.write(seed)
 
-    # Load the seed
-    with open(SEED_FILE, "r") as f:
-        seed_hex = f.read().strip()
+    with open(SEED_FILE) as f:
+        return {"seed": f.read().strip()}
 
-    return {"seed": seed_hex}
-
-
-# 2. Decrypt instructor seed -> save to /data/seed.txt
 @app.post("/decrypt-seed")
 def decrypt_seed():
-    # This should read encrypted_seed.txt and keys, then write the hex seed to SEED_FILE
     return decrypt_seed_route()
 
-
-# 3. Generate a TOTP using the stored seed
 @app.get("/generate-2fa")
 def generate_2fa():
     if not os.path.exists(SEED_FILE):
-        raise HTTPException(
-            status_code=400,
-            detail="Seed not found. Call /request-seed or /decrypt-seed first.",
-        )
+        raise HTTPException(400, "Seed not found")
 
-    with open(SEED_FILE, "r") as f:
-        hex_seed = f.read().strip()
+    with open(SEED_FILE) as f:
+        seed = f.read().strip()
 
-    code = generate_totp_code(hex_seed)
-    return {"code": code, "valid_for": 30}
+    return {
+        "code": generate_totp_code(seed),
+        "valid_for": 30
+    }
 
+class CodeRequest(BaseModel):
+    code: str
 
-# 4. Verify the TOTP entered by user
-@app.post("/verify-2fa/{user_code}")
-def verify_2fa(user_code: str):
+@app.post("/verify-2fa")
+def verify_2fa(req: CodeRequest):
     if not os.path.exists(SEED_FILE):
-        raise HTTPException(
-            status_code=400,
-            detail="Seed not found. Call /request-seed or /decrypt-seed first.",
-        )
+        raise HTTPException(400, "Seed not found")
 
-    with open(SEED_FILE, "r") as f:
-        hex_seed = f.read().strip()
+    with open(SEED_FILE) as f:
+        seed = f.read().strip()
 
-    result = verify_totp_code(hex_seed, user_code)
-    return {"valid": result}
+    return {"valid": verify_totp_code(seed, req.code)}
