@@ -1,44 +1,169 @@
-# PKI 2FA Microservice
-PKI-Based TOTP 2FA Microservice
+🔐 PKI-Based 2FA Microservice (Dockerized)
 
-This project implements a secure Two-Factor Authentication (2FA) service using Public Key Infrastructure (PKI) and Time-based One-Time Passwords (TOTP).
+This project implements a PKI-secured Two-Factor Authentication (2FA) microservice using FastAPI, TOTP, OpenSSL, Docker, and Cron automation.
+It demonstrates secure seed handling, digital signature verification, containerization, and scheduled background tasks.
 
-Features
+📌 Features
 
-Secure TOTP seed encryption using RSA keys
+🔑 Secure seed generation and storage
 
-Generate valid 6-digit OTPs every 30 seconds
+🔐 PKI-based commit integrity verification
 
-Verify OTP through API
+🔢 Time-based One-Time Password (TOTP) generation
 
-Cron job to log OTP automatically
+✅ 2FA code verification API
 
-Fully containerized using Docker
+🐳 Fully Dockerized application
 
-Project Structure
-app.py                # FastAPI service
-scripts/              # OTP generation, verification, cron scripts
-student_public.pem    # Your public key
-instructor_public.pem # Instructor's public key
-data/                 # Stores decrypted seed (volume)
-logs/                 # Cron logs (volume)
-Dockerfile
-docker-compose.yml
+⏱ Automated cron job for logging 2FA codes
 
-Run the Service
-docker-compose up --build
+📁 Persistent secure data storage
+
+🛠️ Tech Stack
+
+Language: Python 3.10
+
+Framework: FastAPI
+
+Security: OpenSSL (PKI)
+
+Containerization: Docker & Docker Compose
+
+Scheduler: Linux Cron
+
+Hashing: SHA-256
+
+OTP: RFC-compliant TOTP
+
+📂 Project Structure
+build-pki-2fa/
+│
+├── app.py
+├── totp_utils.py
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── student_private.pem
+├── student_public.pem
+├── commit_hash.txt
+├── commit_proof.sig
+│
+├── cron/
+│   ├── log_2fa_cron.py
+│   └── 2fa-cron
+│
+└── data/
+    ├── seed.txt
+    └── last_code.txt
+
+🚀 Setup & Execution
+1️⃣ Clone Repository
+git clone <your-repo-url>
+cd build-pki-2fa
+
+2️⃣ Verify Git Commit Integrity (PKI)
+git rev-parse HEAD > commit_hash.txt
+openssl dgst -sha256 -sign student_private.pem commit_hash.txt > commit_proof.sig
+openssl dgst -sha256 -verify student_public.pem \
+-signature commit_proof.sig commit_hash.txt
 
 
-API runs at:
+✅ Expected Output:
 
-http://127.0.0.1:8000/
+Verified OK
 
-Endpoints
+3️⃣ Build Docker Image (No Cache)
+docker compose build --no-cache
 
-GET /generate-2fa → Generate OTP
+4️⃣ Start Application
+docker compose up -d
 
-POST /verify-2fa → Verify OTP
 
-Note
+Verify:
 
-Sensitive files like private keys and seed scripts are not included in the repo for security reasons.
+docker ps
+
+🌐 API Endpoints
+🔍 Health Check
+curl http://localhost:8080/
+
+
+Response:
+
+{"status":"ok"}
+
+🔢 Generate 2FA Code
+curl http://localhost:8080/generate-2fa
+
+
+Response:
+
+{"code":"436634","valid_for":30}
+
+✅ Verify Valid Code
+curl -X POST http://localhost:8080/verify-2fa \
+-H "Content-Type: application/json" \
+-d '{"code":"436634"}'
+
+
+Response:
+
+{"valid":true}
+
+❌ Verify Invalid Code
+curl -X POST http://localhost:8080/verify-2fa \
+-H "Content-Type: application/json" \
+-d '{"code":"000000"}'
+
+
+Response:
+
+{"valid":false}
+
+📁 Seed Verification (Inside Container)
+docker exec -it build-pki-2fa-app sh -c "ls -l /data && cat /data/seed.txt"
+
+
+✔ Seed is securely stored and persistent.
+
+⏱ Cron Job Verification
+Check Cron Entry
+docker exec -it build-pki-2fa-app crontab -l
+
+
+Expected:
+
+* * * * * /usr/local/bin/python3 /app/cron/log_2fa_cron.py
+
+View Logged 2FA Codes
+docker exec -it build-pki-2fa-app sh -c "tail -5 /data/last_code.txt"
+
+
+Example Output:
+
+2025-12-18 13:39:01 2FA Code: 700383
+2025-12-18 13:40:01 2FA Code: 517025
+
+🔐 Security Highlights
+
+Seed never exposed publicly
+
+PKI verifies commit authenticity
+
+SHA-256 hashing
+
+TOTP time-bound validity
+
+Isolated Docker runtime
+
+✅ Final Status
+
+✔ All APIs functional
+✔ PKI verification successful
+✔ Cron automation working
+✔ Docker build reproducible
+✔ Secure seed storage confirmed
+
+🏁 Conclusion
+
+This project demonstrates a production-ready secure 2FA microservice with cryptographic verification, containerization, and automated background execution.
