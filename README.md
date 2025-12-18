@@ -1,41 +1,35 @@
-🔐 PKI-Based 2FA Microservice (Dockerized)
+PKI-Based 2FA Microservice (Dockerized)
+Overview
 
-This project implements a PKI-secured Two-Factor Authentication (2FA) microservice using FastAPI, TOTP, OpenSSL, Docker, and Cron automation.
-It demonstrates secure seed handling, digital signature verification, containerization, and scheduled background tasks.
+This project implements a secure Two-Factor Authentication (2FA) microservice using FastAPI, Time-based One-Time Passwords (TOTP), Public Key Infrastructure (PKI), Docker, and cron automation.
+It demonstrates secure seed handling, cryptographic integrity verification, containerized deployment, and automated background tasks.
 
-📌 Features
+Features
 
-🔑 Secure seed generation and storage
+Secure seed generation and persistent storage
 
-🔐 PKI-based commit integrity verification
+PKI-based Git commit integrity verification
 
-🔢 Time-based One-Time Password (TOTP) generation
+RFC-compliant TOTP generation
 
-✅ 2FA code verification API
+2FA verification API
 
-🐳 Fully Dockerized application
+Fully Dockerized application
 
-⏱ Automated cron job for logging 2FA codes
+Automated cron job for periodic 2FA logging
 
-📁 Persistent secure data storage
+Persistent data storage using Docker volumes
 
-🛠️ Tech Stack
-
-Language: Python 3.10
-
-Framework: FastAPI
-
-Security: OpenSSL (PKI)
-
-Containerization: Docker & Docker Compose
-
-Scheduler: Linux Cron
-
-Hashing: SHA-256
-
-OTP: RFC-compliant TOTP
-
-📂 Project Structure
+Technology Stack
+Category	Technology
+Language	Python 3.10
+Framework	FastAPI
+Security	OpenSSL (PKI)
+OTP	TOTP (RFC-compliant)
+Hashing	SHA-256
+Containerization	Docker, Docker Compose
+Scheduler	Linux Cron
+Project Structure
 build-pki-2fa/
 │
 ├── app.py
@@ -43,6 +37,7 @@ build-pki-2fa/
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
+│
 ├── student_private.pem
 ├── student_public.pem
 ├── commit_hash.txt
@@ -56,35 +51,35 @@ build-pki-2fa/
     ├── seed.txt
     └── last_code.txt
 
-🚀 Setup & Execution
-1️⃣ Clone Repository
+Setup and Execution
+Step 1: Clone the Repository
 git clone <your-repo-url>
 cd build-pki-2fa
 
-2️⃣ Verify Git Commit Integrity (PKI)
+Step 2: Verify Git Commit Integrity Using PKI
 git rev-parse HEAD > commit_hash.txt
 openssl dgst -sha256 -sign student_private.pem commit_hash.txt > commit_proof.sig
 openssl dgst -sha256 -verify student_public.pem \
--signature commit_proof.sig commit_hash.txt
+  -signature commit_proof.sig commit_hash.txt
 
 
-✅ Expected Output:
+Expected output:
 
 Verified OK
 
-3️⃣ Build Docker Image (No Cache)
+Step 3: Build Docker Image
 docker compose build --no-cache
 
-4️⃣ Start Application
+Step 4: Start the Application
 docker compose up -d
 
 
-Verify:
+Verify running containers:
 
 docker ps
 
-🌐 API Endpoints
-🔍 Health Check
+API Endpoints
+Health Check
 curl http://localhost:8080/
 
 
@@ -92,7 +87,7 @@ Response:
 
 {"status":"ok"}
 
-🔢 Generate 2FA Code
+Generate 2FA Code
 curl http://localhost:8080/generate-2fa
 
 
@@ -100,7 +95,7 @@ Response:
 
 {"code":"436634","valid_for":30}
 
-✅ Verify Valid Code
+Verify Valid 2FA Code
 curl -X POST http://localhost:8080/verify-2fa \
 -H "Content-Type: application/json" \
 -d '{"code":"436634"}'
@@ -110,7 +105,7 @@ Response:
 
 {"valid":true}
 
-❌ Verify Invalid Code
+Verify Invalid 2FA Code
 curl -X POST http://localhost:8080/verify-2fa \
 -H "Content-Type: application/json" \
 -d '{"code":"000000"}'
@@ -120,50 +115,59 @@ Response:
 
 {"valid":false}
 
-📁 Seed Verification (Inside Container)
+Seed Verification Inside Container
 docker exec -it build-pki-2fa-app sh -c "ls -l /data && cat /data/seed.txt"
 
 
-✔ Seed is securely stored and persistent.
+This confirms that the seed is securely stored and persistent.
 
-⏱ Cron Job Verification
-Check Cron Entry
+Cron Job Verification
+
+Check cron entry:
+
 docker exec -it build-pki-2fa-app crontab -l
 
 
-Expected:
+Expected output:
 
 * * * * * /usr/local/bin/python3 /app/cron/log_2fa_cron.py
 
-View Logged 2FA Codes
+
+View logged 2FA codes:
+
 docker exec -it build-pki-2fa-app sh -c "tail -5 /data/last_code.txt"
 
 
-Example Output:
+Example output:
 
 2025-12-18 13:39:01 2FA Code: 700383
 2025-12-18 13:40:01 2FA Code: 517025
 
-🔐 Security Highlights
+Security Considerations
 
-Seed never exposed publicly
+The TOTP seed is never exposed via public APIs
 
-PKI verifies commit authenticity
+Commit authenticity is verified using PKI signatures
 
-SHA-256 hashing
+SHA-256 is used for hashing operations
 
-TOTP time-bound validity
+TOTP codes are time-bound and expire automatically
 
-Isolated Docker runtime
+Application runs in an isolated Docker environment
 
-✅ Final Status
+Final Status
 
-✔ All APIs functional
-✔ PKI verification successful
-✔ Cron automation working
-✔ Docker build reproducible
-✔ Secure seed storage confirmed
+All APIs are functional
 
-🏁 Conclusion
+PKI verification completed successfully
 
-This project demonstrates a production-ready secure 2FA microservice with cryptographic verification, containerization, and automated background execution.
+Cron automation verified
+
+Docker build is reproducible
+
+Secure seed storage confirmed
+
+Conclusion
+
+This project provides a secure and reliable implementation of a PKI-verified 2FA microservice using modern containerization and cryptographic practices.
+It is suitable for academic evaluation and demonstrates real-world security design principles.
