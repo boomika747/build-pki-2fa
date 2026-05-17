@@ -35,7 +35,7 @@ ENV TZ=UTC
 # ----------------------------
 
 # 1️⃣ Ensure /data exists (cron + seed storage)
-RUN mkdir -p /data
+RUN mkdir -p /data /cron
 
 # 2️⃣ Make cron script executable
 RUN chmod +x /app/cron/log_2fa_cron.py

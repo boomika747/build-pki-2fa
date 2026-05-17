@@ -4,13 +4,14 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
 
 SEED_FILE = "/data/seed.txt"
-ENCRYPTED_SEED = "/app/encrypted_seed.txt"
 PRIVATE_KEY = "/app/student_private.pem"
 
-def decrypt_seed_route():
+def decrypt_seed_route(encrypted_seed_b64: str):
     try:
-        with open(ENCRYPTED_SEED) as f:
-            encrypted = base64.b64decode(f.read().strip())
+        if not encrypted_seed_b64:
+            raise ValueError("No encrypted seed provided")
+        
+        encrypted = base64.b64decode(encrypted_seed_b64.strip())
 
         with open(PRIVATE_KEY, "rb") as f:
             private_key = serialization.load_pem_private_key(f.read(), None)
@@ -25,7 +26,7 @@ def decrypt_seed_route():
         ).decode()
 
         if len(seed) != 64:
-            raise ValueError("Invalid seed")
+            raise ValueError("Invalid seed length")
 
         os.makedirs("/data", exist_ok=True)
         with open(SEED_FILE, "w") as f:

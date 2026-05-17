@@ -21,3 +21,9 @@ if os.path.exists(SEED_FILE):
 
     with open(OUT_FILE, "a") as f:
         f.write(f"{ts} 2FA Code: {code}\n")
+
+    try:
+        with open("/cron/last_code.txt", "a") as f:
+            f.write(f"{ts} 2FA Code: {code}\n")
+    except Exception:
+        pass
